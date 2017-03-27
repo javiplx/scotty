@@ -12,6 +12,10 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "tnmInt.h"
 #include "tnmPort.h"
 
@@ -786,7 +790,7 @@ TnmPrintCounter64(u_int high, u_int low)
  */
 
 int
-TnmSetIPAddress(Tcl_Interp *interp, char *host, struct sockaddr_in *addr)
+TnmSetIPAddress(Tcl_Interp *interp, const char *host, struct sockaddr_in *addr)
 {
     static Tcl_HashTable *hostTable = NULL;
     Tcl_HashEntry *hostEntry;
@@ -1095,8 +1099,11 @@ TnmValidateIpHostName(Tcl_Interp *interp, const char *name)
     /*
      * A host name must start with one of the characters [a-zA-Z0-9]
      * and continue with characters from the set [-.a-zA-Z0-9] and
-     * must not end with a '.' or a '-'. Names that only contain
+     * must not end with a '-'. Names that only contain
      * digits and three dots are also not allowed.
+     *
+     * NOTE: a hostname is allowed to end with a dot, which the previous version of this code
+     * explicitly disallowed.
      */
 
     if (! isalnum(*p)) {
@@ -1109,7 +1116,7 @@ TnmValidateIpHostName(Tcl_Interp *interp, const char *name)
 	last = *p++;
     }
 
-    if (*p == '\0' && isalnum(last) && (alpha || dots != 3)) {
+    if (*p == '\0' && (isalnum(last) || last == '.') && (alpha || dots != 3)) {
 	return TCL_OK;
     }
 
@@ -1421,7 +1428,8 @@ TnmHexEnc(char *s, int n, char *d)
 
 int
 TnmHexDec(s, d, n)
-    char *s, *d;
+    const char *s;
+    char *d;
     int *n;
 {
     int v;
